@@ -18,23 +18,89 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Mobile navigation toggle
+    // Improved Mobile Menu Functionality
     const hamburger = document.querySelector('.hamburger');
+    const fixedHamburger = document.querySelector('.fixed-hamburger');
     const navLinks = document.querySelector('.nav-links');
+    const navLinksItems = document.querySelectorAll('.nav-link');
+    const body = document.body;
     
-    hamburger.addEventListener('click', function() {
+    // Toggle mobile menu
+    function toggleMenu() {
         navLinks.classList.toggle('active');
-        hamburger.classList.toggle('active');
+        body.classList.toggle('menu-open');
+        
+        // Toggle icon between bars and times
+        const hamburgerIcon = hamburger.querySelector('i');
+        const fixedHamburgerIcon = fixedHamburger.querySelector('i');
+        
+        if (navLinks.classList.contains('active')) {
+            hamburgerIcon.classList.remove('fa-bars');
+            hamburgerIcon.classList.add('fa-times');
+            
+            fixedHamburgerIcon.classList.remove('fa-bars');
+            fixedHamburgerIcon.classList.add('fa-times');
+        } else {
+            hamburgerIcon.classList.remove('fa-times');
+            hamburgerIcon.classList.add('fa-bars');
+            
+            fixedHamburgerIcon.classList.remove('fa-times');
+            fixedHamburgerIcon.classList.add('fa-bars');
+        }
+    }
+    
+    // Add event listeners
+    hamburger.addEventListener('click', toggleMenu);
+    fixedHamburger.addEventListener('click', toggleMenu);
+    
+    // Close menu when clicking on a nav link
+    navLinksItems.forEach(item => {
+        item.addEventListener('click', function() {
+            if (navLinks.classList.contains('active')) {
+                toggleMenu();
+            }
+        });
     });
     
-    // Close mobile menu when clicking on a nav link
-    const navItems = document.querySelectorAll('.nav-links li a');
+    // Close menu when clicking outside
+    document.addEventListener('click', function(e) {
+        const isClickInsideMenu = navLinks.contains(e.target);
+        const isClickOnHamburger = hamburger.contains(e.target) || fixedHamburger.contains(e.target);
+        
+        if (navLinks.classList.contains('active') && !isClickInsideMenu && !isClickOnHamburger) {
+            toggleMenu();
+        }
+    });
     
-    navItems.forEach(function(item) {
-        item.addEventListener('click', function() {
-            navLinks.classList.remove('active');
-            hamburger.classList.remove('active');
-        });
+    // Handle scroll behavior
+    let lastScrollTop = 0;
+    
+    window.addEventListener('scroll', function() {
+        const currentScrollTop = window.scrollY;
+        
+        // Add fixed header on scroll
+        if (currentScrollTop > 50) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+        
+        // Show/hide fixed hamburger on scroll up/down
+        if (window.innerWidth <= 768) {
+            if (currentScrollTop > 300) {
+                if (currentScrollTop > lastScrollTop) {
+                    // Scrolling down
+                    fixedHamburger.classList.add('active');
+                } else {
+                    // Scrolling up
+                    fixedHamburger.classList.remove('active');
+                }
+            } else {
+                fixedHamburger.classList.remove('active');
+            }
+        }
+        
+        lastScrollTop = currentScrollTop;
     });
     
     // Portfolio filtering with pagination
