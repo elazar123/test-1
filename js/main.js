@@ -40,8 +40,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Portfolio filtering with pagination
     const portfolioTabs = document.querySelectorAll('.tab-btn');
     const portfolioItemElements = document.querySelectorAll('.portfolio-item');
-    const loadMoreBtn = document.querySelector('.portfolio-load-more');
-    const itemsPerPage = 6; // Show 6 items per page
+    const portfolioGrid = document.querySelector('.portfolio-grid');
+    const itemsPerPageAll = 12; // Show 12 items (3×4 grid) when showing all items
+    const itemsPerPageFiltered = 6; // Show 6 items (2×3 grid) when filtering
     let currentPage = 1;
     
     // Initialize portfolio
@@ -53,9 +54,45 @@ document.addEventListener('DOMContentLoaded', function() {
         currentPage = 1;
         
         // Filter items based on category
-        const filteredItems = Array.from(portfolioItemElements).filter(function(item) {
-            return category === 'all' || item.getAttribute('data-category') === category;
-        });
+        let filteredItems = [];
+        
+        if (category === 'all') {
+            // בכרטיסיית "הכל" - מציג בדיוק 9 סרטונים בחלוקה ספציפית
+            // 4 שידורים חיים
+            const liveItems = Array.from(portfolioItemElements).filter(item => 
+                item.getAttribute('data-category') === 'live');
+            // 2 עריכות
+            const editingItems = Array.from(portfolioItemElements).filter(item => 
+                item.getAttribute('data-category') === 'editing');
+            // 1 הופעה
+            const performanceItems = Array.from(portfolioItemElements).filter(item => 
+                item.getAttribute('data-category') === 'performance');
+            // 2 סושיאל
+            const socialItems = Array.from(portfolioItemElements).filter(item => 
+                item.getAttribute('data-category') === 'social');
+            
+            // ערבוב כל קבוצה בנפרד
+            shuffleArray(liveItems);
+            shuffleArray(editingItems);
+            shuffleArray(performanceItems);
+            shuffleArray(socialItems);
+            
+            // שילוב של אלמנטים מכל קטגוריה
+            filteredItems = [
+                ...liveItems.slice(0, 4),      // 4 שידורים
+                ...editingItems.slice(0, 2),   // 2 עריכות
+                ...performanceItems.slice(0, 1), // 1 הופעה
+                ...socialItems.slice(0, 2)     // 2 סושיאל
+            ];
+            
+            // ערבוב סופי של הרשימה המשולבת
+            shuffleArray(filteredItems);
+        } else {
+            // פילטור רגיל לקטגוריות אחרות
+            filteredItems = Array.from(portfolioItemElements).filter(function(item) {
+                return item.getAttribute('data-category') === category;
+            });
+        }
         
         // Hide all items first
         portfolioItemElements.forEach(function(item) {
@@ -63,15 +100,22 @@ document.addEventListener('DOMContentLoaded', function() {
             item.style.opacity = '0';
         });
         
-        // Show first page of filtered items
-        showItems(filteredItems, 1);
+        // Toggle filtering class on portfolio grid
+        if (category === 'all') {
+            portfolioGrid.classList.remove('filtering');
+        } else {
+            portfolioGrid.classList.add('filtering');
+        }
         
-        // Show/hide load more button based on total items
-        toggleLoadMoreButton(filteredItems);
+        // Determine items per page based on category
+        const itemsPerPage = category === 'all' ? 9 : itemsPerPageFiltered;
+        
+        // Show first page of filtered items
+        showItems(filteredItems, 1, itemsPerPage);
     }
     
     // Show items for a specific page
-    function showItems(items, page) {
+    function showItems(items, page, itemsPerPage) {
         const startIndex = (page - 1) * itemsPerPage;
         const endIndex = startIndex + itemsPerPage;
         
@@ -89,11 +133,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Toggle load more button visibility
-    function toggleLoadMoreButton(items) {
-        if (items.length <= currentPage * itemsPerPage) {
-            loadMoreBtn.style.display = 'none';
-        } else {
-            loadMoreBtn.style.display = 'inline-flex';
+    function toggleLoadMoreButton(items, itemsPerPage) {
+        if (loadMoreBtn) {
+            if (items.length <= currentPage * itemsPerPage) {
+                loadMoreBtn.style.display = 'none';
+            } else {
+                loadMoreBtn.style.display = 'inline-flex';
+            }
         }
     }
     
@@ -110,28 +156,120 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Initialize portfolio with the new category
             initPortfolio();
+            
+            // טיפול בכפתור "טען עוד" - הצגה רק בקטגוריית "stills"
+            if (loadMoreBtn) {
+                if (this.getAttribute('data-category') === 'stills') {
+                    const stillsItems = document.querySelectorAll('.portfolio-item[data-category="stills"]');
+                    const visibleCount = window.innerWidth >= 992 ? 6 : window.innerWidth >= 576 ? 4 : 3;
+                    
+                    if (stillsItems.length > visibleCount) {
+                        loadMoreBtn.style.display = 'inline-block';
+                    } else {
+                        loadMoreBtn.style.display = 'none';
+                    }
+                } else {
+                    loadMoreBtn.style.display = 'none';
+                }
+            }
         });
     });
     
-    // Add event listener to load more button
+    // Load more functionality for portfolio items
+    const loadMoreBtn = document.getElementById('load-more-btn');
     if (loadMoreBtn) {
+        let visibleItems = {
+            desktop: 6,  // מספר פריטים נראים במסך רחב
+            tablet: 4,   // מספר פריטים נראים בטאבלט
+            mobile: 3    // מספר פריטים נראים במובייל
+        };
+        
         loadMoreBtn.addEventListener('click', function() {
             const activeTab = document.querySelector('.tab-btn.active');
             const category = activeTab ? activeTab.getAttribute('data-category') : 'all';
             
-            // Filter items based on category
-            const filteredItems = Array.from(portfolioItemElements).filter(function(item) {
-                return category === 'all' || item.getAttribute('data-category') === category;
-            });
+            // אם נמצאים בקטגוריית צילומי סטילס
+            if (category === 'stills') {
+                let stillsItems = Array.from(document.querySelectorAll('.portfolio-item[data-category="stills"]'));
+                let initialCount;
+                
+                // קביעת מספר הפריטים הנראים בהתאם לרוחב המסך
+                if (window.innerWidth >= 992) {
+                    initialCount = visibleItems.desktop;
+                    visibleItems.desktop += 6;
+                } else if (window.innerWidth >= 576) {
+                    initialCount = visibleItems.tablet;
+                    visibleItems.tablet += 4;
+                } else {
+                    initialCount = visibleItems.mobile;
+                    visibleItems.mobile += 3;
+                }
+                
+                // הצגת פריטים נוספים
+                let itemsToShow = stillsItems.slice(initialCount, Math.max(initialCount + 6, stillsItems.length));
+                
+                itemsToShow.forEach((item, index) => {
+                    setTimeout(() => {
+                        item.style.display = 'block';
+                        setTimeout(() => {
+                            item.style.opacity = '1';
+                        }, 50);
+                    }, index * 100);
+                });
+                
+                // הסתרת כפתור אם כל הפריטים מוצגים
+                if (window.innerWidth >= 992 && visibleItems.desktop >= stillsItems.length ||
+                    window.innerWidth >= 576 && window.innerWidth < 992 && visibleItems.tablet >= stillsItems.length ||
+                    window.innerWidth < 576 && visibleItems.mobile >= stillsItems.length) {
+                    loadMoreBtn.style.display = 'none';
+                }
+            } else {
+                // לקטגוריות אחרות - שימוש בפונקציונליות המקורית
+                const filteredItems = Array.from(portfolioItemElements).filter(function(item) {
+                    return category === 'all' || item.getAttribute('data-category') === category;
+                });
+                
+                // Increment current page
+                currentPage++;
+                
+                // Show items for the new page
+                showItems(filteredItems, currentPage, itemsPerPageFiltered);
+                
+                // Toggle load more button
+                toggleLoadMoreButton(filteredItems, itemsPerPageFiltered);
+            }
+        });
+        
+        // הוספת אירוע כדי לעדכן את מצב הכפתור בעת שינוי גודל החלון
+        window.addEventListener('resize', function() {
+            const activeTab = document.querySelector('.tab-btn.active');
+            const category = activeTab ? activeTab.getAttribute('data-category') : 'all';
             
-            // Increment current page
-            currentPage++;
-            
-            // Show items for the new page
-            showItems(filteredItems, currentPage);
-            
-            // Toggle load more button
-            toggleLoadMoreButton(filteredItems);
+            if (category === 'stills') {
+                let stillsItems = document.querySelectorAll('.portfolio-item[data-category="stills"]');
+                
+                // איפוס מצב התצוגה של הפריטים בהתאם לרוחב המסך
+                stillsItems.forEach((item, index) => {
+                    if (window.innerWidth >= 992 && index < visibleItems.desktop ||
+                        window.innerWidth >= 576 && window.innerWidth < 992 && index < visibleItems.tablet ||
+                        window.innerWidth < 576 && index < visibleItems.mobile) {
+                        item.style.display = 'block';
+                        item.style.opacity = '1';
+                    } else {
+                        item.style.display = 'none';
+                        item.style.opacity = '0';
+                    }
+                });
+                
+                // הצגת הכפתור אם יש עוד פריטים להצגה
+                if (window.innerWidth >= 992 && visibleItems.desktop < stillsItems.length ||
+                    window.innerWidth >= 576 && window.innerWidth < 992 && visibleItems.tablet < stillsItems.length ||
+                    window.innerWidth < 576 && visibleItems.mobile < stillsItems.length) {
+                    loadMoreBtn.style.display = 'inline-block';
+                } else {
+                    loadMoreBtn.style.display = 'none';
+                }
+            }
         });
     }
     
@@ -150,50 +288,119 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Form validation
+    // ===== FORM SUBMISSION AND SUCCESS MESSAGE ===== //
     const contactForm = document.getElementById('contact-form');
     
     if (contactForm) {
-        contactForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Basic validation
-            const name = document.getElementById('name').value;
-            const phone = document.getElementById('phone').value;
-            const email = document.getElementById('email').value;
-            
-            let isValid = true;
-            
-            if (name.trim() === '') {
-                showError('name', 'שם מלא הוא שדה חובה');
-                isValid = false;
-            } else {
-                clearError('name');
-            }
-            
-            if (phone.trim() === '') {
-                showError('phone', 'מספר טלפון הוא שדה חובה');
-                isValid = false;
-            } else {
-                clearError('phone');
-            }
-            
-            if (email.trim() === '') {
-                showError('email', 'אימייל הוא שדה חובה');
-                isValid = false;
-            } else if (!isValidEmail(email)) {
-                showError('email', 'אנא הזן כתובת אימייל חוקית');
-                isValid = false;
-            } else {
-                clearError('email');
-            }
-            
-            if (isValid) {
-                // Submit form via AJAX
-                const formData = new FormData(contactForm);
+        // טיפול בהצגת הודעת הצלחה כשהטופס נשלח
+        const showSuccessMessage = () => {
+            const successMessage = document.getElementById('success-message');
+            if (successMessage) {
+                successMessage.style.display = 'block';
                 
-                // Display success message
-                contactForm.innerHTML = '<div class="success-message">תודה על פנייתך! נחזור אליך בהקדם.</div>';
+                // גלילה להודעה
+                window.scrollTo({
+                    top: successMessage.offsetTop - 100,
+                    behavior: 'smooth'
+                });
+                
+                // איפוס הטופס
+                contactForm.reset();
+            }
+        };
+        
+        // בדיקה אם הגיעו מהטופס עם הודעת הצלחה
+        if (window.location.hash === '#success') {
+            showSuccessMessage();
+        }
+        
+        // Add event listener to prevent default form submission when running locally
+        contactForm.addEventListener('submit', function(e) {
+            // Check if we're running the site from a file:// protocol
+            if (window.location.protocol === 'file:') {
+                e.preventDefault(); // Stop the form from submitting
+                
+                // בדיקות בסיסיות של תקינות הטופס
+                const name = document.getElementById('name').value;
+                const phone = document.getElementById('phone').value;
+                const email = document.getElementById('email').value;
+                
+                let isValid = true;
+                
+                if (name.trim() === '') {
+                    showError('name', 'שם מלא הוא שדה חובה');
+                    isValid = false;
+                } else {
+                    clearError('name');
+                }
+                
+                if (phone.trim() === '') {
+                    showError('phone', 'מספר טלפון הוא שדה חובה');
+                    isValid = false;
+                } else {
+                    clearError('phone');
+                }
+                
+                if (email.trim() === '') {
+                    showError('email', 'אימייל הוא שדה חובה');
+                    isValid = false;
+                } else if (!isValidEmail(email)) {
+                    showError('email', 'אנא הזן כתובת אימייל חוקית');
+                    isValid = false;
+                } else {
+                    clearError('email');
+                }
+                
+                if (isValid) {
+                    // Simulate a successful form submission when running locally
+                    showSuccessMessage();
+                    
+                    // Display console message for developer
+                    console.log('Form submitted locally. In production, this would be sent to: elazar12321@gmail.com');
+                    console.log('Form data:', {
+                        name,
+                        phone,
+                        email,
+                        'event-type': document.getElementById('event-type').value,
+                        'event-date': document.getElementById('event-date').value,
+                        message: document.getElementById('message').value
+                    });
+                }
+            } else {
+                // Standard validation for online environment
+                const name = document.getElementById('name').value;
+                const phone = document.getElementById('phone').value;
+                const email = document.getElementById('email').value;
+                
+                let isValid = true;
+                
+                if (name.trim() === '') {
+                    showError('name', 'שם מלא הוא שדה חובה');
+                    isValid = false;
+                } else {
+                    clearError('name');
+                }
+                
+                if (phone.trim() === '') {
+                    showError('phone', 'מספר טלפון הוא שדה חובה');
+                    isValid = false;
+                } else {
+                    clearError('phone');
+                }
+                
+                if (email.trim() === '') {
+                    showError('email', 'אימייל הוא שדה חובה');
+                    isValid = false;
+                } else if (!isValidEmail(email)) {
+                    showError('email', 'אנא הזן כתובת אימייל חוקית');
+                    isValid = false;
+                } else {
+                    clearError('email');
+                }
+                
+                if (!isValid) {
+                    e.preventDefault(); // מניעת שליחת הטופס אם יש שגיאה
+                }
             }
         });
     }
@@ -203,29 +410,31 @@ document.addEventListener('DOMContentLoaded', function() {
         return emailRegex.test(email);
     }
     
-    function showError(inputId, message) {
-        const input = document.getElementById(inputId);
-        input.classList.add('error');
-        
-        // Check if error message exists
-        let errorMessage = input.nextElementSibling;
-        if (!errorMessage || !errorMessage.classList.contains('error-message')) {
-            errorMessage = document.createElement('span');
-            errorMessage.classList.add('error-message');
-            input.parentNode.insertBefore(errorMessage, input.nextSibling);
+    function showError(fieldId, message) {
+        const errorElement = document.getElementById(`${fieldId}-error`);
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            
+            // Add error class to the input
+            const inputField = document.getElementById(fieldId);
+            if (inputField) {
+                inputField.classList.add('error');
+            }
         }
-        
-        errorMessage.textContent = message;
     }
     
-    function clearError(inputId) {
-        const input = document.getElementById(inputId);
-        input.classList.remove('error');
-        
-        // Remove error message if exists
-        const errorMessage = input.nextElementSibling;
-        if (errorMessage && errorMessage.classList.contains('error-message')) {
-            errorMessage.remove();
+    function clearError(fieldId) {
+        const errorElement = document.getElementById(`${fieldId}-error`);
+        if (errorElement) {
+            errorElement.textContent = '';
+            errorElement.style.display = 'none';
+            
+            // Remove error class from the input
+            const inputField = document.getElementById(fieldId);
+            if (inputField) {
+                inputField.classList.remove('error');
+            }
         }
     }
     
@@ -298,57 +507,41 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize animations for stats counter
     initStatsCounter();
 
-    // Video Modal
-    const videoModal = document.getElementById('video-modal');
-    const videoIframe = document.getElementById('modal-video-iframe');
+    // Get elements
     const videoLinks = document.querySelectorAll('.view-project:not(.view-image)');
+    const imageLinks = document.querySelectorAll('.view-image');
+    const videoModal = document.getElementById('video-modal');
+    const imageModal = document.getElementById('image-modal');
+    const videoIframe = document.getElementById('modal-video-iframe');
+    const modalImage = document.getElementById('modal-image');
     const closeButtons = document.querySelectorAll('.close-modal');
     
-    // Image Modal
-    const imageModal = document.getElementById('image-modal');
-    const modalImage = document.getElementById('modal-image');
-    const imageLinks = document.querySelectorAll('.view-image');
-    
-    // Function to open video modal with YouTube embed
-    function openVideoModal(videoId) {
-        console.log('Opening video modal with ID:', videoId);
-        if (videoId) {
-            videoIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-            videoModal.style.display = 'flex';
-            document.body.style.overflow = 'hidden'; // Prevent scrolling
-        } else {
-            console.error("No video ID provided");
+    // Function to close modals
+    function closeModals() {
+        // Close video modal
+        if (videoModal) {
+            videoModal.style.display = 'none';
+            if (videoIframe) {
+                videoIframe.src = '';
+            }
         }
+        
+        // Close image modal
+        if (imageModal) {
+            imageModal.style.display = 'none';
+        }
+        
+        document.body.style.overflow = 'auto'; // Enable scrolling
     }
     
     // Function to open image modal
     function openImageModal(imageSrc) {
-        modalImage.src = imageSrc;
-        imageModal.style.display = 'flex';
-        document.body.style.overflow = 'hidden'; // Prevent scrolling
+        if (imageSrc && imageModal && modalImage) {
+            modalImage.src = imageSrc;
+            imageModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+        }
     }
-    
-    // Function to close modals
-    function closeModals() {
-        videoModal.style.display = 'none';
-        imageModal.style.display = 'none';
-        videoIframe.src = '';
-        document.body.style.overflow = 'auto'; // Allow scrolling again
-    }
-    
-    // Event listeners for video links
-    videoLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const videoId = this.getAttribute('data-video-id');
-            console.log('Clicked video link with ID:', videoId);
-            if (videoId) {
-                openVideoModal(videoId);
-            } else {
-                console.error("No video ID found on this link");
-            }
-        });
-    });
     
     // Event listeners for image links
     imageLinks.forEach(link => {
@@ -480,109 +673,53 @@ if (tabBtns.length > 0 && portfolioItemElements.length > 0) {
     });
 }
 
-// ===== FORM VALIDATION ===== //
-const contactForm = document.getElementById('contact-form');
-
-if (contactForm) {
-    contactForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        
-        // Simple validation
-        let valid = true;
-        const nameInput = document.getElementById('name');
-        const phoneInput = document.getElementById('phone');
-        const emailInput = document.getElementById('email');
-        
-        if (!nameInput.value.trim()) {
-            valid = false;
-            nameInput.classList.add('error');
-        } else {
-            nameInput.classList.remove('error');
-        }
-        
-        if (!phoneInput.value.trim()) {
-            valid = false;
-            phoneInput.classList.add('error');
-        } else {
-            phoneInput.classList.remove('error');
-        }
-        
-        if (!emailInput.value.trim() || !emailInput.value.includes('@')) {
-            valid = false;
-            emailInput.classList.add('error');
-        } else {
-            emailInput.classList.remove('error');
-        }
-        
-        if (valid) {
-            // Here you would normally send the form data to your server
-            // For demo purposes, we'll just show a success message
-            const successMessage = document.createElement('div');
-            successMessage.className = 'success-message';
-            successMessage.textContent = 'תודה! הטופס נשלח בהצלחה. ניצור איתך קשר בהקדם.';
-            
-            contactForm.appendChild(successMessage);
-            contactForm.reset();
-            
-            // Remove success message after 5 seconds
-            setTimeout(() => {
-                successMessage.remove();
-            }, 5000);
-        }
-    });
-}
-
-// ===== SCROLL TO SECTION ===== //
-const navLinksList = document.querySelectorAll('.nav-links a');
-
-if (navLinksList.length > 0) {
-    navLinksList.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            
-            const targetId = link.getAttribute('href');
-            const targetSection = document.querySelector(targetId);
-            
-            if (targetSection) {
-                window.scrollTo({
-                    top: targetSection.offsetTop - 100,
-                    behavior: 'smooth'
-                });
+// ===== IMAGE MODAL FUNCTIONALITY ===== //
+document.addEventListener('DOMContentLoaded', function() {
+    // מוצא את כל קישורי התמונות בפורטפוליו
+    const imageLinks = document.querySelectorAll('.view-image');
+    const imageModal = document.getElementById('image-modal');
+    const modalImage = document.getElementById('modal-image');
+    
+    if (imageLinks && imageModal && modalImage) {
+        // מוסיף מאזין אירועים לכל קישור תמונה
+        imageLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const imageSrc = this.getAttribute('href');
                 
-                // Close mobile menu if open
-                if (navLinks.classList.contains('active')) {
-                    navLinks.classList.remove('active');
-                }
+                // מציג את התמונה במודל
+                modalImage.src = imageSrc;
+                imageModal.style.display = 'flex';
+                document.body.classList.add('modal-open'); // מניעת גלילה
+            });
+        });
+        
+        // סגירת המודל בלחיצה על X
+        const closeButtons = document.querySelectorAll('.close-modal');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                imageModal.style.display = 'none';
+                document.body.classList.remove('modal-open');
+            });
+        });
+        
+        // סגירת המודל בלחיצה מחוץ לתמונה
+        imageModal.addEventListener('click', function(e) {
+            if (e.target === imageModal) {
+                imageModal.style.display = 'none';
+                document.body.classList.remove('modal-open');
             }
         });
-    });
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    // Show first testimonial - update this to use the testimonial functions from main code
-    const firstTestimonial = document.querySelector('.testimonial-slide');
-    if (firstTestimonial) {
-        firstTestimonial.style.display = 'block';
-        firstTestimonial.style.opacity = '1';
-    }
-    
-    // Animate counters if visible
-    if (stats && isInViewport(stats)) {
-        animateCounter();
+        
+        // סגירה באמצעות מקש Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && imageModal.style.display === 'flex') {
+                imageModal.style.display = 'none';
+                document.body.classList.remove('modal-open');
+            }
+        });
     }
 });
-
-// Helper function to check if element is in viewport
-function isInViewport(element) {
-    const rect = element.getBoundingClientRect();
-    return (
-        rect.top >= 0 &&
-        rect.left >= 0 &&
-        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-    );
-}
 
 // Animate shapes in various sections
 function animateShapes() {
@@ -753,4 +890,58 @@ function initLogosGrid() {
     startRandomAnimations();
     
     console.log("Logos grid animations initialized");
+}
+
+// Helper function to shuffle an array (Fisher-Yates algorithm)
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+// Function to send form data to WhatsApp
+function sendToWhatsApp(event) {
+    event.preventDefault();
+    
+    // Get form values
+    const name = document.getElementById('name').value || '';
+    const phone = document.getElementById('phone').value || '';
+    const email = document.getElementById('email').value || '';
+    const eventType = document.getElementById('event-type').value || '';
+    const eventDate = document.getElementById('event-date').value || '';
+    const message = document.getElementById('message').value || '';
+    
+    // Basic minimal validation
+    if (!name) {
+        alert('אנא הזן שם מלא');
+        return false;
+    }
+    
+    // Construct WhatsApp message - using encodeURIComponent for better handling of special characters
+    let whatsappMessage = encodeURIComponent(`פנייה חדשה מאתר נהורא\n\n`);
+    whatsappMessage += encodeURIComponent(`שם: ${name}\n`);
+    whatsappMessage += encodeURIComponent(`טלפון: ${phone}\n`);
+    whatsappMessage += encodeURIComponent(`אימייל: ${email}\n`);
+    
+    if (eventType) {
+        whatsappMessage += encodeURIComponent(`סוג אירוע: ${eventType}\n`);
+    }
+    
+    if (eventDate) {
+        whatsappMessage += encodeURIComponent(`תאריך: ${eventDate}\n`);
+    }
+    
+    if (message) {
+        whatsappMessage += encodeURIComponent(`הודעה: ${message}\n`);
+    }
+    
+    // WhatsApp phone number (international format without +)
+    const whatsappNumber = '972525624350';
+    
+    // Create WhatsApp URL and open it directly
+    window.location.href = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
+    
+    return false;
 } 

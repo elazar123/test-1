@@ -200,8 +200,9 @@ ul {
     width: 100%;
 }
 
+/* Update button style for WhatsApp */
 .btn-submit {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    background: linear-gradient(135deg, #25D366, #128C7E);
     color: white;
     width: 100%;
     font-size: 1.1rem;
@@ -209,11 +210,20 @@ ul {
     letter-spacing: 1px;
     transform: scale(1);
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-submit:hover {
-    transform: scale(1.01);
-    box-shadow: 0 8px 25px rgba(255, 85, 0, 0.25);
+    transform: scale(1.02);
+    box-shadow: 0 8px 25px rgba(37, 211, 102, 0.25);
+    background: linear-gradient(135deg, #128C7E, #075E54);
+}
+
+.btn-submit i {
+    margin-left: 10px;
+    font-size: 1.3rem;
 }
 
 /* ===== HEADER & NAVIGATION ===== */
@@ -349,14 +359,11 @@ nav {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 100vw;
-    height: 56.25vw; /* 16:9 ratio */
-    min-height: 100%;
-    min-width: 177.77vh; /* 16:9 ratio */
-    pointer-events: none;
-    z-index: 0;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
-    object-position: center center;
+    pointer-events: none;
+    z-index: -1;
 }
 
 .hero-content {
@@ -390,9 +397,9 @@ nav {
 }
 
 .hero-logo {
-    max-width: 450px;
-    margin-bottom: 30px;
-    filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.5));
+    max-width: 300px;
+    height: auto;
+    margin-bottom: 25px;
     animation: pulseSlow 3s infinite alternate;
 }
 
@@ -1158,17 +1165,64 @@ nav {
 
 .portfolio-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 25px;
-    margin-bottom: 40px;
+    margin-top: 30px;
 }
 
+/* When filtering content show 2 columns with 3 rows */
+.filtering .portfolio-grid {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+/* צילומי סטילס - הוספת סגנון ייחודי */
+.portfolio-item[data-category="stills"] .portfolio-img {
+    height: 280px;
+}
+
+.portfolio-item[data-category="stills"] img {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+}
+
+/* הצגת פריטי סטילס לפי מספר בהתחלה */
+@media (min-width: 992px) {
+    .portfolio-item[data-category="stills"]:not(:nth-child(-n+6)) {
+        display: none;
+    }
+}
+
+@media (max-width: 991px) {
+    .portfolio-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .portfolio-item[data-category="stills"]:not(:nth-child(-n+4)) {
+        display: none;
+    }
+}
+
+@media (max-width: 576px) {
+    .portfolio-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .portfolio-item[data-category="stills"]:not(:nth-child(-n+3)) {
+        display: none;
+    }
+}
+
+/* Portfolio Item Styles */
 .portfolio-item {
     position: relative;
-    border-radius: 10px;
+    border-radius: var(--border-radius);
     overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.6s forwards ease-out;
 }
 
 .portfolio-item:hover,
@@ -1183,7 +1237,8 @@ nav {
     overflow: hidden;
 }
 
-.portfolio-img img {
+.portfolio-img img, 
+.portfolio-img iframe {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -1193,6 +1248,16 @@ nav {
 .portfolio-item:hover .portfolio-img img,
 .portfolio-item.hovered .portfolio-img img {
     transform: scale(1.05);
+}
+
+/* Additional style for iframes */
+.portfolio-img iframe {
+    border: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
 }
 
 .portfolio-overlay {
@@ -1206,6 +1271,7 @@ nav {
     opacity: 0;
     transform: translateY(20px);
     transition: all 0.3s ease;
+    z-index: 10; /* Ensure overlay appears above the iframe */
 }
 
 .portfolio-item:hover .portfolio-overlay,
@@ -1379,96 +1445,76 @@ nav {
 }
 
 .contact-container {
-    max-width: 700px;
-    margin: 0 auto;
-    position: relative;
-    z-index: 1;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 30px;
+    margin-top: 30px;
 }
 
-.contact h2 {
-    margin-bottom: 50px;
-}
-
-#contact-form {
-    background-color: var(--bg-color);
-    padding: 50px;
+.contact-info {
+    background-color: rgba(26, 26, 26, 0.8);
     border-radius: var(--border-radius);
-    box-shadow: var(--shadow-lg);
-    position: relative;
-    z-index: 2;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 30px;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
 }
 
-.form-group {
-    margin-bottom: 25px;
-    position: relative;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 10px;
-    font-weight: 500;
-    color: var(--text-light);
-    transition: var(--transition);
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-    width: 100%;
-    padding: 15px 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--border-radius);
-    font-family: var(--font-family);
-    font-size: 1rem;
-    transition: var(--transition);
-    background-color: rgba(0, 0, 0, 0.2);
-    color: var(--text-color);
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.2);
-    background-color: rgba(0, 0, 0, 0.3);
-}
-
-.form-group input:focus + label,
-.form-group select:focus + label,
-.form-group textarea:focus + label {
+.contact-info h3 {
+    margin-bottom: 20px;
+    font-size: 1.8rem;
     color: var(--primary-color);
+    text-align: right;
 }
 
-.form-group textarea {
-    min-height: 120px;
-    resize: vertical;
+.contact-info p {
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
 }
 
-.error-message {
-    color: #e74c3c;
-    font-size: 0.9rem;
-    margin-top: 5px;
-    display: block;
-}
-
-.form-group input.error,
-.form-group select.error,
-.form-group textarea.error {
-    border-color: #e74c3c;
-    box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.1);
-}
-
-.success-message {
-    background-color: #d4edda;
-    color: #155724;
-    padding: 15px;
-    margin-top: 20px;
-    border-radius: var(--border-radius);
+.contact-info i {
+    margin-left: 10px;
+    color: var(--primary-color);
+    width: 20px;
     text-align: center;
-    font-weight: 500;
-    animation: fadeInUp 0.5s ease;
+}
+
+.contact-social {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+}
+
+.contact-social a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.contact-social a:hover {
+    transform: scale(1.1);
+    background-color: var(--primary-dark);
+}
+
+/* Responsive styles for contact section */
+@media (max-width: 768px) {
+    .contact-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .contact-info {
+        order: -1;
+        margin-bottom: 20px;
+    }
 }
 
 /* ===== FOOTER ===== */
@@ -2266,37 +2312,44 @@ footer::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.9);
-    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0.95);
+    z-index: 2000;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    padding: 10px;
+    cursor: zoom-out;
 }
 
 .modal-content {
     position: relative;
-    width: 90%;
-    max-width: 1000px;
+    max-width: 90%;
     max-height: 90vh;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
-    overflow: hidden;
+    margin: auto;
+    cursor: default;
 }
 
 .close-modal {
     position: absolute;
-    top: 10px;
+    top: 15px;
     right: 15px;
     color: white;
-    font-size: 30px;
+    font-size: 35px;
     font-weight: bold;
     cursor: pointer;
-    z-index: 1010;
-    text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    z-index: 2001;
+    width: 50px;
+    height: 50px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
 }
 
 .close-modal:hover {
-    color: #ff6600;
+    background-color: rgba(255, 102, 0, 0.8);
+    transform: scale(1.1);
 }
 
 .modal-video-container {
@@ -2327,8 +2380,10 @@ footer::before {
 #modal-image {
     max-width: 100%;
     max-height: 90vh;
-    border-radius: 8px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    object-fit: contain;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+    border-radius: 5px;
+    transition: all 0.3s ease;
 }
 
 /* Responsive Adjustments */
@@ -2342,4 +2397,285 @@ footer::before {
         right: 10px;
         font-size: 24px;
     }
+}
+
+.contact h2 {
+    margin-bottom: 50px;
+}
+
+#contact-form {
+    background-color: var(--bg-color);
+    padding: 50px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    z-index: 2;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.form-group {
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 500;
+    color: var(--text-light);
+    transition: var(--transition);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 15px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius);
+    font-family: var(--font-family);
+    font-size: 1rem;
+    transition: var(--transition);
+    background-color: rgba(0, 0, 0, 0.2);
+    color: var(--text-color);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.form-group input:focus + label,
+.form-group select:focus + label,
+.form-group textarea:focus + label {
+    color: var(--primary-color);
+}
+
+.form-group textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.error-message {
+    color: #ff3333;
+    font-size: 0.85rem;
+    margin-top: 5px;
+    display: none;
+}
+
+.form-group input.error,
+.form-group select.error,
+.form-group textarea.error {
+    border-color: #ff3333;
+    background-color: rgba(255, 51, 51, 0.05);
+}
+
+.success-message {
+    background-color: #dff0d8;
+    color: #3c763d;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    text-align: center;
+    display: none;
+}
+
+.success-message i {
+    font-size: 24px;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+.load-more-container {
+    text-align: center;
+    margin-top: 40px;
+}
+
+#load-more-btn {
+    padding: 12px 35px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+#load-more-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 25px rgba(255, 102, 0, 0.2);
+}
+
+/* הוספת אנימציית זום */
+.portfolio-item[data-category="stills"] .portfolio-img {
+    overflow: hidden;
+    cursor: zoom-in;
+}
+
+.portfolio-item[data-category="stills"] img {
+    transition: transform 0.5s ease;
+}
+
+.portfolio-item[data-category="stills"]:hover img {
+    transform: scale(1.05);
+}
+
+.modal-open {
+    overflow: hidden; /* מונע גלילה כשהמודל פתוח */
+}
+
+/* Error and Success Messages */
+.error-message {
+    color: #ff3333;
+    font-size: 0.85rem;
+    margin-top: 5px;
+    display: none;
+}
+
+input.error, textarea.error, select.error {
+    border-color: #ff3333;
+    background-color: rgba(255, 51, 51, 0.05);
+}
+
+.success-message {
+    background-color: #dff0d8;
+    color: #3c763d;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    text-align: center;
+    display: none;
+}
+
+.success-message i {
+    font-size: 24px;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+/* Fix for FormSubmit error message */
+.container h1 {
+    margin-bottom: 1rem;
+    font-size: 2.5rem;
+}
+
+.container p {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* WhatsApp Floating Button */
+.floating-whatsapp {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    background-color: #25D366;
+    color: white;
+    border-radius: 50%;
+    width: 65px;
+    height: 65px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    transition: all 0.3s ease;
+    animation: pulse 2s infinite;
+}
+
+.floating-whatsapp:hover {
+    transform: scale(1.1) translateY(-5px);
+    background-color: #128C7E;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    animation: none;
+}
+
+.floating-whatsapp i {
+    font-size: 32px;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
+        transform: scale(1);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(37, 211, 102, 0);
+        transform: scale(1.05);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+        transform: scale(1);
+    }
 } 
+
+/* Clean single column contact form */
+.contact-container.single-column {
+    display: block;
+    max-width: 650px;
+    margin: 0 auto;
+}
+
+.contact-container.single-column form {
+    width: 100%;
+    margin: 0 auto;
+    background-color: rgba(26, 26, 26, 0.7);
+    border-radius: var(--border-radius);
+    padding: 40px 50px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.contact {
+    position: relative;
+    overflow: hidden;
+    padding: 90px 0 100px;
+}
+
+.contact h2 {
+    margin-bottom: 50px;
+    font-size: 2.6rem;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .contact-container.single-column form {
+        padding: 30px 25px;
+    }
+}
+
+/* Updated footer without contact info */
+.footer-logo-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.footer-logo {
+    max-width: 170px;
+    filter: brightness(1.1);
+}
+
+.footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 80px;
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .footer-links {
+        flex-direction: column;
+        gap: 30px;
+    }
+}
